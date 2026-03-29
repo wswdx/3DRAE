@@ -2,7 +2,7 @@
 
 This is the repository that contains source code for the [3DRAE website](https://xxx.github.io).
 
-If you find Nerfies useful for your work please cite:
+If you find 3DRAE useful for your work please cite:
 ```
 @article{wei20263drae
   author    = {Wei, Dongxu and Xu, Qi and Li, Zhiqi and Zhou, Hangning and Qiu, Cong and Qin, Hailong and Yang, Mu and Cui, Zhaopeng and Liu, Peidong},

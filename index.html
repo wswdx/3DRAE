@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Any 3D Scene is Worth 1K Tokens: 3D-Grounded Representation for Scene Generation at Scale</title>
+
+  <!-- Global site tag (gtag.js) - Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-PYVRSFMDRL"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+
+    function gtag() {
+      dataLayer.push(arguments);
+    }
+
+    gtag('js', new Date());
+
+    gtag('config', 'G-PYVRSFMDRL');
+  </script>
+
+  <link href="https://fonts.googleapis.com/css?family=Google+Sans|Noto+Sans|Castoro"
+        rel="stylesheet">
+
+  <link rel="icon" href="./static/images/favicon.png">
+  <link rel="stylesheet" href="./static/css/bulma.min.css">
+  <!-- 移除bulma-carousel和bulma-slider，使用自定义轮播实现一次只展示一个视频 -->
+  <link rel="stylesheet" href="./static/css/fontawesome.all.min.css">
+  <link rel="stylesheet"
+        href="https://cdn.jsdelivr.net/gh/jpswalsh/academicons@1/css/academicons.min.css">
+  <link rel="stylesheet" href="./static/css/index.css">
+
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+  <script defer src="./static/js/fontawesome.all.min.js"></script>
+  <!-- 不再使用bulma-carousel和bulma-slider，避免冲突 -->
+  <style>
+    /* 自定义轮播样式 - 一次只展示一个视频 */
+    .custom-carousel {
+      max-width: 950px;      /* 设置最大宽度，可根据需要调整 */
+      margin: 0 auto;        /* 水平居中 */
+      width: 100%;           /* 确保在移动端自适应 */
+    }
+    
+    .carousel-wrapper {
+      overflow: hidden;
+      width: 100%;
+    }
+    
+    .carousel-items {
+      display: flex;
+      transition: transform 0.4s ease-in-out;
+      will-change: transform;
+    }
+    
+    .carousel-item {
+      flex: 0 0 100%;
+      width: 100%;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    
+    .carousel-item video {
+      width: 100%;
+      height: auto;
+      max-height: 70vh;
+      object-fit: contain;
+      background: #000;
+      border-radius: 8px;
+      display: block;
+    }
+    
+    /* 导航按钮样式 */
+    .carousel-btn {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      background: rgba(0, 0, 0, 0.6);
+      color: white;
+      border: none;
+      font-size: 2rem;
+      font-weight: bold;
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: background 0.3s ease;
+      z-index: 10;
+      backdrop-filter: blur(4px);
+    }
+    
+    .carousel-btn:hover {
+      background: rgba(0, 0, 0, 0.85);
+    }
+    
+    .carousel-btn.prev {
+      left: 20px;
+    }
+    
+    .carousel-btn.next {
+      right: 20px;
+    }
+    
+    /* 指示点容器 */
+    .carousel-indicators {
+      display: flex;
+      justify-content: center;
+      gap: 12px;
+      margin-top: 20px;
+      padding: 12px 0;
+      flex-wrap: wrap;
+    }
+    
+    .indicator {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #ccc;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    
+    .indicator.active {
+      background: #3273dc;
+      transform: scale(1.2);
+      width: 24px;
+      border-radius: 12px;
+    }
+    
+    .indicator:hover {
+      background: #888;
+    }
+    
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+      .carousel-btn {
+        width: 36px;
+        height: 36px;
+        font-size: 1.5rem;
+      }
+      .carousel-btn.prev {
+        left: 10px;
+      }
+      .carousel-btn.next {
+        right: 10px;
+      }
+      .carousel-item video {
+        max-height: 50vh;
+      }
+    }
+    
+    /* 保持原有section背景样式 */
+    .hero.is-light.is-small {
+      background-color: #f5f5f5;
+    }
+  </style>
+</head>
+<body>
+
+<section class="hero">
+  <div class="hero-body">
+    <div class="container is-max-desktop">
+      <div class="columns is-centered">
+        <div class="column has-text-centered">
+          <h1 class="title is-1 publication-title">Any 3D Scene is Worth 1K Tokens: 3D-Grounded Representation for Scene Generation at Scale</h1>
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">
+              <a href="weidongxu@westlake.edu.cn">Dongxu Wei</a><sup>1,2*</sup>,</span>
+            <span class="author-block">
+              <a href="xuqiwhu@whu.edu.cn">Qi Xu</a><sup>1*</sup>,</span>
+            <span class="author-block">
+              <a href="lizhiqi49@westlake.edu.cn">Zhiqi Li</a><sup>1,3</sup>,
+            </span>
+            <span class="author-block">
+              <a href="zhouhangning@qianli-drive.com">Hangning Zhou</a><sup>2✝</sup>,
+            </span>
+            <span class="author-block">
+              <a href="qiucong@qianli-drive.com">Cong Qiu</a><sup>2</sup>,
+            </span>
+            <br/>
+            <span class="author-block">
+              <a href="https://scholar.google.com/citations?user=2RvMxVUAAAAJ&hl=en">Hailong Qin</a><sup>2</sup>,
+            </span>
+            <span class="author-block">
+              <a href="ym@qianli-drive.com">Mu Yang</a><sup>2</sup>,</span>
+            <span class="author-block">
+              <a href="https://zhpcui.github.io/">Zhaopeng Cui</a><sup>3</sup>,</span>
+            <span class="author-block">
+              <a href="https://ethliup.github.io/">Peidong Liu</a><sup>1✉️</sup></span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block"><sup>1</sup>Westlake University,</span>
+            <span class="author-block"><sup>2</sup>Afari Intelligent Drive,</span>
+            <span class="author-block"><sup>3</sup>Zhejiang University</span>
+          </div>
+
+          <div class="is-size-5 publication-authors">
+            <span class="author-block">*: Equal Contribution,</span>
+            <span class="author-block">✝: Project Lead,</span>
+            <span class="author-block">✉️: Corresponding Author</span>
+          </div>
+
+          <div class="column has-text-centered">
+            <div class="publication-links">
+              <!-- PDF Link. -->
+              <span class="link-block">
+                <a href="https://arxiv.org/pdf/xxxx.xxxxx"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fas fa-file-pdf"></i>
+                  </span>
+                  <span>Paper</span>
+                </a>
+              </span>
+              <span class="link-block">
+                <a href="https://arxiv.org/abs/xxxx.xxxxx"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="ai ai-arxiv"></i>
+                  </span>
+                  <span>arXiv</span>
+                </a>
+              </span>
+              <!-- Code Link. -->
+              <span class="link-block">
+                <a href="https://github.com/WU-CVGL/3DRAE"
+                   class="external-link button is-normal is-rounded is-dark">
+                  <span class="icon">
+                      <i class="fab fa-github"></i>
+                  </span>
+                  <span>Code</span>
+                  </a>
+              </span>
+
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero teaser">
+  <div class="container is-max-desktop">
+    <div class="hero-body">
+      <video id="teaser" autoplay muted loop playsinline height="100%">
+        <source src="./src/teaser.mp4"
+                type="video/mp4">
+      </video>
+      <h2 class="subtitle has-text-centered">
+        <u><b>3DRAE</b></u> grounds multi-view observed 3D scenes into fixed-length (e.g., 256, 512, 1024) 3D latent tokens, and decodes them back to view-based images and point maps.
+        <u><b>3DDiT</b></u> directly performs diffusion modeling within this 3D latent space to generate 3D scenes <u>in 2 seconds</u>.
+      </h2>
+    </div>
+  </div>
+</section>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Abstract. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Abstract</h2>
+        <div class="content has-text-justified">
+          <p>
+            3D scene generation has long been dominated by 2D multi-view or video diffusion models.
+            This is due not only to the lack of scene-level 3D latent representation,
+            but also to the fact that most scene-level 3D visual data exists in the form of multi-view images or videos,
+            which are naturally compatible with 2D diffusion architectures.
+            Typically, these 2D-based approaches degrade 3D spatial extrapolation to 2D temporal extension,
+            which introduces two fundamental issues: (i) representing 3D scenes via 2D views <u>leads to significant representation redundancy</u>,
+            and (ii) latent space rooted in 2D inherently <u>limits the spatial consistency of the generated 3D scenes</u>.
+          </p>
+          <p>
+            In this paper, we propose, for the first time, to perform 3D scene generation directly within an implicit 3D latent space to address these limitations.
+            First, we repurpose frozen 2D representation encoders to construct our <b>3D Representation Autoencoder (3DRAE)</b>,
+            which grounds view-coupled 2D semantic representations into a view-decoupled 3D latent representation.
+            This enables representing 3D scenes observed from arbitrary numbers of views—at any resolution and aspect ratio—with fixed complexity and rich semantics.
+            Then we introduce <b>3D Diffusion Transformer (3DDiT)</b>, which performs diffusion modeling in this 3D latent space,
+            achieving remarkably efficient and spatially consistent 3D scene generation while supporting diverse conditioning configurations.
+          </p>
+          <p>
+            Moreover, since our approach directly generates a 3D scene representation,
+            it can be decoded to images and optional point maps along arbitrary camera trajectories without requiring per-trajectory diffusion sampling pass, which is common in 2D-based approaches.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Abstract. -->
+  </div>
+</section>
+
+<section class="hero is-light is-small">
+  <div class="hero-body">
+    <div class="container">
+      <!-- 新增标题 -->
+      <h3 class="title is-3 has-text-centered">1K tokens represent 3D scenes observed by any number of views.</h3>
+      <!-- 新增的一句话 -->
+      <p class="is-6 has-text-centered mb-4">
+        We can use 3DRAE to encode any number of views into fixed-length 3D latent tokens, and decode them into images and pointmaps of arbitrary novel views.<br>
+        Below we render point cloud and camera frustums for 3D scenes observed by different numbers (16 vs. 128) of input views.
+      </p>
+      <div class="custom-carousel" data-carousel-idx="0">
+        <div class="carousel-wrapper">
+          <div class="carousel-items">
+            <!-- 视频项：替换为您的实际视频路径 -->
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/dense_0.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/dense_1.mp4" type="video/mp4"></video></div>
+          </div>
+        </div>
+        <button class="carousel-btn prev">‹</button>
+        <button class="carousel-btn next">›</button>
+        <div class="carousel-indicators"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero is-light is-small">
+  <div class="hero-body">
+    <div class="container">
+      <!-- 新增标题 -->
+      <h3 class="title is-3 has-text-centered">Single-View Conditioned 3D Generation</h3>
+      <!-- 新增的一句话 -->
+      <p class="is-6 has-text-centered mb-4">
+        <b>Left</b>: conditional view. <b>Right</b>: generated 3D scene with point cloud and camera frustum renderings.
+        We highlight camera frustum of the conditional view <b><span style="color: red;">in red</span></b>.
+      </p>
+      <div class="custom-carousel" data-carousel-idx="0">
+        <div class="carousel-wrapper">
+          <div class="carousel-items">
+            <!-- 视频项：替换为您的实际视频路径 -->
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/p1_0.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/p1_1.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/p1_2.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/p1_3.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/p1_4.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/p1_5.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/p1_6.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/p1_7.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/p1_8.mp4" type="video/mp4"></video></div>
+          </div>
+        </div>
+        <button class="carousel-btn prev">‹</button>
+        <button class="carousel-btn next">›</button>
+        <div class="carousel-indicators"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero is-light is-small">
+  <div class="hero-body">
+    <div class="container">
+      <!-- 新增标题 -->
+      <h3 class="title is-3 has-text-centered">Multi-View Conditioned 3D Generation</h3>
+      <!-- 新增的一句话 -->
+      <p class="is-6 has-text-centered mb-4">
+        <b>Left</b>: conditional views. <b>Right</b>: generated 3D scene with point cloud and camera frustum renderings.
+        We highlight camera frustums of the conditional views <b><span style="color: red;">in red</span></b>.
+      </p>
+      <div class="custom-carousel" data-carousel-idx="1">
+        <div class="carousel-wrapper">
+          <div class="carousel-items">
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/p2_0.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/p2_1.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/p2_2.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/p6_0.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/p6_1.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/p6_2.mp4" type="video/mp4"></video></div>
+          </div>
+        </div>
+        <button class="carousel-btn prev">‹</button>
+        <button class="carousel-btn next">›</button>
+        <div class="carousel-indicators"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="hero is-light is-small">
+  <div class="hero-body">
+    <div class="container">
+      <!-- 新增标题 -->
+      <h3 class="title is-3 has-text-centered">Unconditioned 3D Generation</h3>
+      <!-- 新增的一句话 -->
+      <p class="is-6 has-text-centered mb-4">
+        Given a specific camera trajectory as condition, we can generate various 3D scenes by altering random seeds.
+      </p>
+      <video autoplay muted loop playsinline controls style="display: block; max-width: 950px; margin: 0 auto;">
+        <source src="./src/unc.mp4" type="video/mp4">
+      </video>
+    </div>
+  </div>
+</section>
+
+<section class="hero is-light is-small">
+  <div class="hero-body">
+    <div class="container">
+      <!-- 新增标题 -->
+      <h3 class="title is-3 has-text-centered">Zero-Shot Results on Tanks & Temples, Mip-NeRF 360, and DTU datasets.</h3>
+      <!-- 新增的一句话 -->
+      <p class="is-6 has-text-centered mb-4">
+        <b>Left</b>: conditional view. <b>Right</b>: generated 3D scene with point cloud and camera frustum renderings.
+        We highlight camera frustum of the conditional view <b><span style="color: red;">in red</span></b>.
+      </p>
+      <div class="custom-carousel" data-carousel-idx="1">
+        <div class="carousel-wrapper">
+          <div class="carousel-items">
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/zs_p1_0.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/zs_p1_1.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/zs_p1_2.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/zs_p1_3.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/zs_p1_4.mp4" type="video/mp4"></video></div>
+            <div class="carousel-item"><video controls muted loop playsinline><source src="./src/zs_p1_5.mp4" type="video/mp4"></video></div>
+          </div>
+        </div>
+        <button class="carousel-btn prev">‹</button>
+        <button class="carousel-btn next">›</button>
+        <div class="carousel-indicators"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+  (function() {
+    // 初始化所有滑块
+    function initCarousel(container) {
+      const wrapper = container.querySelector('.carousel-wrapper');
+      const itemsContainer = container.querySelector('.carousel-items');
+      const prevBtn = container.querySelector('.prev');
+      const nextBtn = container.querySelector('.next');
+      const indicatorsContainer = container.querySelector('.carousel-indicators');
+
+      if (!itemsContainer || !prevBtn || !nextBtn || !indicatorsContainer) return;
+
+      const items = itemsContainer.querySelectorAll('.carousel-item');
+      const totalItems = items.length;
+      let currentIndex = 0;
+      let isTransitioning = false;
+      let autoPlayInterval = null;
+
+      // 创建指示点
+      function createIndicators() {
+        indicatorsContainer.innerHTML = '';
+        for (let i = 0; i < totalItems; i++) {
+          const dot = document.createElement('div');
+          dot.classList.add('indicator');
+          if (i === currentIndex) dot.classList.add('active');
+          dot.addEventListener('click', () => {
+            if (isTransitioning) return;
+            goToSlide(i);
+          });
+          indicatorsContainer.appendChild(dot);
+        }
+      }
+
+      function updateIndicators() {
+        const dots = indicatorsContainer.querySelectorAll('.indicator');
+        dots.forEach((dot, idx) => {
+          dot.classList.toggle('active', idx === currentIndex);
+        });
+      }
+
+      function goToSlide(index) {
+        if (isTransitioning) return;
+        if (index < 0) index = totalItems - 1;
+        if (index >= totalItems) index = 0;
+        if (index === currentIndex) return;
+
+        isTransitioning = true;
+        currentIndex = index;
+        const offset = -currentIndex * 100;
+        itemsContainer.style.transform = `translateX(${offset}%)`;
+        updateIndicators();
+
+        setTimeout(() => {
+          isTransitioning = false;
+          manageVideoPlayback();
+        }, 400);
+      }
+
+      function nextSlide() {
+        if (isTransitioning) return;
+        goToSlide(currentIndex + 1);
+        resetAutoPlay();
+      }
+
+      function prevSlide() {
+        if (isTransitioning) return;
+        goToSlide(currentIndex - 1);
+        resetAutoPlay();
+      }
+
+      function manageVideoPlayback() {
+        const videos = container.querySelectorAll('.carousel-item video');
+        videos.forEach((video, idx) => {
+          if (idx === currentIndex) {
+            if (video.paused) video.play().catch(e => console.log('自动播放被阻止', e));
+          } else {
+            if (!video.paused) video.pause();
+          }
+        });
+      }
+
+      function startAutoPlay() {
+        if (autoPlayInterval) clearInterval(autoPlayInterval);
+        autoPlayInterval = setInterval(() => {
+          if (!isTransitioning) nextSlide();
+        }, 5000);
+      }
+
+      function resetAutoPlay() {
+        if (autoPlayInterval) {
+          clearInterval(autoPlayInterval);
+          startAutoPlay();
+        }
+      }
+
+      function stopAutoPlay() {
+        if (autoPlayInterval) {
+          clearInterval(autoPlayInterval);
+          autoPlayInterval = null;
+        }
+      }
+
+      // 绑定事件
+      prevBtn.addEventListener('click', prevSlide);
+      nextBtn.addEventListener('click', nextSlide);
+
+      // 鼠标悬停暂停自动播放
+      container.addEventListener('mouseenter', stopAutoPlay);
+      container.addEventListener('mouseleave', startAutoPlay);
+
+      // 触摸滑动支持
+      let touchStartX = 0;
+      container.addEventListener('touchstart', (e) => {
+        touchStartX = e.changedTouches[0].screenX;
+      });
+      container.addEventListener('touchend', (e) => {
+        const touchEndX = e.changedTouches[0].screenX;
+        if (touchStartX - touchEndX > 50) nextSlide();
+        else if (touchEndX - touchStartX > 50) prevSlide();
+      });
+
+      // 初始化位置
+      itemsContainer.style.transform = 'translateX(0%)';
+      createIndicators();
+
+      // 启动自动播放
+      startAutoPlay();
+
+      // 初始化后管理视频播放
+      setTimeout(manageVideoPlayback, 200);
+    }
+
+    // 页面加载完成后，初始化所有滑块
+    document.addEventListener('DOMContentLoaded', () => {
+      const carousels = document.querySelectorAll('.custom-carousel');
+      carousels.forEach(carousel => initCarousel(carousel));
+    });
+  })();
+</script>
+
+<section class="section">
+  <div class="container is-max-desktop">
+    <!-- Impact. -->
+    <div class="columns is-centered has-text-centered">
+      <div class="column is-four-fifths">
+        <h2 class="title is-3">Broader Impact</h2>
+        <div class="content has-text-justified">
+          <p>
+            (1) We introduce <u><b>a novel paradigm</u>: repurposing 2D representation models to derive 3D-grounded latent representation for 3D scenes</b>.
+            Such 3D latent representation preserves the rich semantics inherent in 2D models while being grounded with 3D awareness.
+            Crucially, such compact 3D latent representation is substantially more efficient than representing 3D scenes as multi-view images or videos.
+            By performing diffusion modeling directly within this 3D latent space at scale, we demonstrate <u><b>efficient 3D scene generation with strong spatial consistency</b></u>.
+          </p>
+          <p>
+            (2) Our 3D latent space, particularly when derived from SigLIP2, is naturally compatible with mainstream large multimodal models.
+            Potentially, it <b>enables the conversion of multi-view observed 3D scenes into a fixed length set of <u>3D-aware and language-aligned tokens</u></b>,
+            facilitating 3D scene understanding without relying on image- or video-based large multimodal models as in many existing approaches.
+          </p>
+          <p>
+            (3) We open <b>new possibilities toward <u>building embodied agents that unify 3D worlds and language</b></u>.
+            Furthermore, our 3D latent space holds promise for <u><b>unifying 3D scene understanding and generation within shared representation</b></u>,
+            contributing to the development of physical world models.
+          </p>
+        </div>
+      </div>
+    </div>
+    <!--/ Impact. -->
+  </div>
+</section>
+
+<section class="section" id="BibTeX">
+  <div class="container is-max-desktop content">
+    <h2 class="title">BibTeX</h2>
+    <pre><code>@article{wei20263drae,
+  author    = {Wei, Dongxu and Xu, Qi and Li, Zhiqi and Zhou, Hangning and Qiu, Cong and Qin, Hailong and Yang, Mu and Cui, Zhaopeng and Liu, Peidong},
+  title     = {Any 3D Scene is Worth 1K Tokens: 3D-Grounded Representation for Scene Generation at Scale},
+  journal   = {arXiv},
+  year      = {2026},
+}</code></pre>
+  </div>
+</section>
+
+
+<footer class="footer">
+  <div class="container">
+    <div class="content has-text-centered">
+      <a class="icon-link"
+         href="./static/videos/nerfies_paper.pdf">
+        <i class="fas fa-file-pdf"></i>
+      </a>
+      <a class="icon-link" href="https://github.com/keunhong" class="external-link" disabled>
+        <i class="fab fa-github"></i>
+      </a>
+    </div>
+    <div class="columns is-centered">
+      <div class="column is-8">
+        <div class="content">
+          <p>
+            This page was built using the <a href="https://github.com/eliahuhorwitz/Academic-project-page-template" target="_blank">Academic Project Page Template</a> which was adopted from the <a href="https://nerfies.github.io" target="_blank">Nerfies</a> project page.
+            You are free to borrow the of this website, we just ask that you link back to this page in the footer. <br> This website is licensed under a <a rel="license"  href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank">Creative
+            Commons Attribution-ShareAlike 4.0 International License</a>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>
